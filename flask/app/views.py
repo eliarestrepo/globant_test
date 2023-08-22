@@ -37,6 +37,27 @@ def historical() -> str:
             print(f"The historical insert in the {table_name} table failed {e.args}")
     
     return json.dumps({'success': success_list, 'failed': failed_list })
+
+@app.route("/insert", methods=['GET', 'POST'])
+def insert() -> str:
+    """Inserts rows into the departments(id, department), 
+        hired_employees(id, name, datetime, department_id, job_id), 
+        and jobs(id, job) tables
+        Arguments: table_name str, row_dict list[dict1, dict1]/dict
+        Returns: a string indicating whether it was successful or not"""
+    try:
+        print(request.args)
+        table_name = request.args.get('table_name')
+        row_dict = request.args.get('row_dict')
+        print('succesful in the params set up')
+        insert_row(table_name=table_name, row= json.loads(row_dict))
+        result = {'success': f'The values {row_dict} were inserted in the {table_name} table'}
+    except Exception as e:
+        result = {'failed': f'The values {row_dict} could not be inserted in the {table_name} table: {e}'}
+       
+    return json.dumps(result)
+
+
    
 @app.route("/")
 def index():
