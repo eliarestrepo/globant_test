@@ -1,0 +1,11 @@
+Flask==2.0.3
+uWSGI
+mariadb
+typing
+pandas
+SQLAlchemy==2.0.7
+ipython
+pymysql
+datetime
+fastavro
+matplotlib
