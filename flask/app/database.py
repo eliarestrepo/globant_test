@@ -66,7 +66,46 @@ def read_df(query:str) -> DataFrame :
     df =  pd.read_sql(query,conn)
     return df
 
+def to_avro(table_name:str):
+    """Save a table from the db to an avro file
+        Arg: table_name str
+        Return: name_to_save str: avro file name str """
+    df = read_df(f"SELECT * FROM {table_name}")
+    df, fields_list = df_columns_format(df, table_name = table_name, type = 'to_avro')
+    schema = {
+    'doc': 'Avro Schema',
+    'name': table_name,
+    'namespace': 'test',
+    'type': 'record',
+    'fields': fields_list
+    }
+    sufix = datetime.now()
+    sufix_file_name = sufix.strftime("%Y_%m_%d_%H%M%S")
+    sufix_record = sufix.strftime("%Y-%m-%d %H:%M:%S")
+    name_to_save = f'{table_name}_{sufix_file_name}.avro'
+    
+    with open(f'{name_to_save}', 'wb') as out:
+        writer(out, schema, df.to_dict('records'))
+    insert_row(table_name = 'backups', row = {"table_name" : table_name, "schema_name ": json.dumps(schema), "created" : sufix_record, "file" : name_to_save})
+    return name_to_save
 
+def insert_avro(table_name:str, created:str, name_to_save:str):
+    """Save a table to the db from an avro file
+        Args: table_name str: name of the table to be restored, 
+            created str: date the avro file was made, 
+            name_to_save str: name with which to save the table
+        Return: name_to_save str"""
+    conn = engine_connection()
+    avro_log = read_df(f"SELECT * FROM backups where table_name = '{table_name}' and created = '{created}'").to_dict('records')
+    backup_name = avro_log[0]["file"]
+    schema = json.loads(avro_log[0]["schema_name"])
+    with open(f'{backup_name}', 'rb') as fo:
+        avro_reader = reader(fo, schema)
+        records = [r for r in avro_reader]
+        df = pd.DataFrame.from_records(records)
+    df = df_columns_format(df, table_name = table_name, type = 'to_sql')
+    df.to_sql(name = name_to_save, con = conn,  if_exists= "replace" )
+    return name_to_save
     
 
 
