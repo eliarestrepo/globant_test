@@ -111,6 +111,82 @@ def index():
 
     return "Hello from Flask"
 
+@app.route('/first_report', methods=("POST", "GET"))
+def report1():
+    """Sample table of those hired for the year 2021
+        by department and position, for each quartile
+        Arguments: None
+        Return: html"""
+    query = """
+    with t1 as (
+        select 
+            j.job, d.department, h.datetime, h.id 
+        from hired_employees  h 
+        left join jobs j on h.job_id = j.id 
+        left join departments d on h.department_id = d.id 
+        where extract(year from h.datetime)=2021),
+    t2 as (
+        select 
+            job, department, extract(quarter from datetime) q, count(*) hired_count 
+        from t1 
+        group by job, department, q)
+    select * from t2 order by department, job"""
+    df = read_df(query)
+    df = df.pivot(index=['job','department'],columns='q',values='hired_count') \
+            .sort_values(by=['department','job']).fillna(0)
+    return render_template('first_report.html',
+                           PageTitle = "Conteo de empleados por quartil",
+                           table=[df.to_html(classes='data', index=True)], titles= df.columns.values)
+
+@app.route('/second_report', methods=("POST", "GET"))
+def report2():
+    """Sample table of those hired for the year 2021
+        for departments that were above average
+        Args: None
+        Return: Html"""
+    query = """
+    with t1 as (
+        select 
+            d.id, d.department, h.id id_employee
+        from hired_employees  h 
+        left join departments d on h.department_id = d.id 
+        where extract(year from h.datetime)=2021),
+    t2 as (
+        select 
+            id, department, count(*) hired 
+        from t1 
+        group by id, department),
+    avg as (
+        select
+            avg(hired) avg_hired
+        from t2
+    )
+    select t2.* from t2 inner join avg on t2.hired >= avg.avg_hired"""
+    df = read_df(query)
+    df = df.sort_values(by='hired')
+    return render_template('second_report.html',
+                           PageTitle = "Departamentos que excedieron el promedio",
+                           table=[df.to_html(classes='data', index = False)], titles= df.columns.values)
+
+
+#Matplotlib page
+@app.route('/matplot', methods=("POST", "GET"))
+def mpl():
+    return render_template('matplot.html',
+                           PageTitle = "Matplotlib")
+
+
+def create_figure():
+    fig, ax = plt.subplots(figsize = (6,4))
+    fig.patch.set_facecolor('#E8E5DA')
+
+    x = ECS_data.team
+    y = ECS_data.gw1
+
+    ax.bar(x, y, color = "#304C89")
+
+    plt.xticks(rotation = 30, size = 5)
+    plt.ylabel("Expected Clean Sheets", size = 5)
 
 
 
