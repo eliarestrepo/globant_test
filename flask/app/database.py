@@ -2,33 +2,58 @@ from typing import List, Dict
 from app.format import COLUMNS,df_columns_format
 from pandas import DataFrame
 import pandas as pd
-import mariadb
+from google.cloud.sql.connector import Connector
 from fastavro import writer, reader
 import sqlalchemy
 from datetime import datetime
 import json
+import os
+
+class DbSettings:
+    """Settings for SQL."""
+    def __init__(self):
+        self.host: str = os.getenv("INSTANCE_CONNECTION_NAME")
+        self.user: str = os.getenv("db_user")
+        self.password:str = os.getenv("db_password")
+        self.db_name: str = os.getenv("db_name")
 
 def engine_connection():
     """Create a db conection for pandas
         Args: None
         Return: sqlalchemy engine"""
-    conn = sqlalchemy.create_engine("mariadb+pymysql://root:root@db:3306/learning")
+    conn = sqlalchemy.create_engine("mysql+pymysql://", creator=connection)
     return conn
 
-def connection():
+def connection(db_name: str = 'learning'):
     """Create a database conection to query directly over the db
         Args: None
         Return: DB conection"""
+    db_settings = DbSettings()
+    INSTANCE_CONNECTION_NAME=db_settings.host
+    connector = Connector()
     config = {
-        'user': 'root',
-        'password': 'root',
-        'host': 'db',
-        'port': 3306,
-        'database': 'learning',
+        'user': db_settings.user,
+        'password': db_settings.password,
+        'database': db_settings.db_name,
         'autocommit':True
     }
-    connection = mariadb.connect(**config)
+    connection = connector.connect(INSTANCE_CONNECTION_NAME,
+        "pymysql", **config)
     return connection
+
+def init_db():
+    result_list = []
+    path_root = os.getcwd()
+    conn = connection("")
+    cur = conn.cursor()
+    file = f'{path_root}/app/db/init.sql' 
+    with open(file) as f:
+        query = f.read()
+        for sub_query in query.split(";"):
+            result_str= cur.execute(sub_query)
+            result_list.append(result_str)
+    cur.close()
+    return result_list
 
 def insert_csv(table_name:str,file_path:str):
     """Insert data from a csv file into the db
@@ -38,7 +63,7 @@ def insert_csv(table_name:str,file_path:str):
     columns = list(COLUMNS.get(table_name))
     df = pd.read_csv(file_path, names= columns )
     df = df_columns_format(df, table_name = table_name, type = 'to_sql')
-    df.to_sql(name = table_name, con = conn,  if_exists= "append", index = False )
+    df.to_sql(name = table_name, con = conn,  if_exists= "replace", index = False )
 
 def insert_row(table_name:str, row):
     """Insert rows in a specific table

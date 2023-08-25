@@ -14,6 +14,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 
 
+
 @app.route("/historical")
 def historical() -> str:
     """Inserts into the department, hired_employees and jobs tables the 
@@ -169,24 +170,10 @@ def report2():
                            table=[df.to_html(classes='data', index = False)], titles= df.columns.values)
 
 
-#Matplotlib page
-@app.route('/matplot', methods=("POST", "GET"))
-def mpl():
-    return render_template('matplot.html',
-                           PageTitle = "Matplotlib")
 
 
-def create_figure():
-    fig, ax = plt.subplots(figsize = (6,4))
-    fig.patch.set_facecolor('#E8E5DA')
 
-    x = ECS_data.team
-    y = ECS_data.gw1
 
-    ax.bar(x, y, color = "#304C89")
-
-    plt.xticks(rotation = 30, size = 5)
-    plt.ylabel("Expected Clean Sheets", size = 5)
 
 
 

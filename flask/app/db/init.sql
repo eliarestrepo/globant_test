@@ -1,7 +1,6 @@
-CREATE DATABASE learning;
-use learning;
+CREATE DATABASE IF NOT EXISTS learning;
 
-CREATE TABLE hired_employees (
+CREATE OR REPLACE TABLE  learning.hired_employees (
   id             INT
   ,name          VARCHAR(130)
   ,datetime      DATETIME
@@ -9,18 +8,18 @@ CREATE TABLE hired_employees (
   ,job_id        INT
 );
 
-CREATE TABLE departments (
+CREATE OR REPLACE TABLE  learning.departments (
   id          INT
   ,department VARCHAR(130)
 
 );
 
-CREATE TABLE jobs (
+CREATE OR REPLACE TABLE  learning.jobs (
   id   INT
   ,job VARCHAR(130)
 );
 
-CREATE TABLE backups(
+CREATE OR REPLACE TABLE  learning.backups(
   table_name   VARCHAR(130)
   ,schema_name LONGTEXT
   ,created     DATETIME

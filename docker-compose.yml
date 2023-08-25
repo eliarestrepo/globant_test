@@ -4,21 +4,34 @@ services:
     build: ./flask
     container_name: flask
     restart: always
+    env_file:
+      - ./secrets.env
     environment:
       - APP_NAME=MyFlaskApp
+      - GOOGLE_APPLICATION_CREDENTIALS=/glowing-indexer-396616-22ddf5cfe2be.json 
+    volumes:
+      - type: bind
+        source: ./glowing-indexer-396616-22ddf5cfe2be.json
+        target: /glowing-indexer-396616-22ddf5cfe2be.json
+        read_only: true    
     expose:
       - 8080
+    networks:
+      - my-app
   nginx:
     build: ./nginx
     container_name: nginx
     restart: always
     ports:
       - "8003:80"
-  db:
-    image: mariadb:10.5.8
-    ports:
-      - "32000:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-    volumes:
-      - ./db:/docker-entrypoint-initdb.d/:ro
+    networks:
+      - my-app
+
+  
+networks:
+  my-app:
+    name: my-app
+    driver: bridge
+
+
+  
