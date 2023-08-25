@@ -170,6 +170,12 @@ def report2():
                            table=[df.to_html(classes='data', index = False)], titles= df.columns.values)
 
 
+@app.route('/dashboard', methods=("POST", "GET"))
+def mpl():
+    return render_template('dashboard.html',
+                           PageTitle = "Dashboard")
+
+
 
 
 
