@@ -7,11 +7,12 @@
 The endpoints found are:
 
 Endpoints:
-- /historical
+-  /historical
 -  /insert 
 -  /backup
 -  /first_report
 -  /second_report
+-  /dashboard
 </p>
 
 <h3>/historical:</h3>
